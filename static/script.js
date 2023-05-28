@@ -7,10 +7,10 @@ window.addEventListener('load', function () {
 });
 
 
-const greeting = async () => {
-  const url = `/greeting?username=${document.getElementById("userName").value}`;
-  let response = await fetch(url);
-  const userDataResponse = await response.json();
-  console.log(userDataResponse);
-  document.getElementById("buttonResponse").innerHTML = userDataResponse;
-}
+const showOAuth = async () => {
+  window.location.href = '/login';
+};
+
+const logout = async () => {
+  window.location.href = '/logout';
+};

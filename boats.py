@@ -1,44 +1,93 @@
-from flask import Flask, request, jsonify, Blueprint
+from flask import Flask, request, jsonify, Blueprint, make_response
 from google.cloud import datastore
 from db import *
+from db_boats import *
 from responsehelper import *
+from jwtverify import verify_jwt
 import json
 
 bp = Blueprint('boats', __name__, url_prefix='/boats')
 
-# 1.) Create a boat 
+# Create Boat 
 @bp.route('/', methods=['POST'])
 def post_boat():
-    boat = request.get_json();
-    res,boat = AddBoatToDb(boat)
-    if res:
-        return json.loads(boat), 201
-    else:
-        return jsonify(errorMissingAttribute), 400
+    '''
+    Successful Codes: 201
+    Unsuccessuful Codes; 401 (JWT)
 
-# 2.) View a boat with id
+    Validates JWT to create a Boat
+    '''
+    payload = verify_jwt(request) # returns with 401 error if token not validated
+    boat = request.get_json()
+    sub = payload['sub']
+
+    statuscode, boat = AddBoatToDb(boat,sub)
+    if statuscode == 201:
+        res = make_response(boat)
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res
+    else:
+        res = make_response(jsonify(errorMessage[statuscode]))
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res
+
+# Get Boats by ID
 @bp.route('/<boatId>', methods=['GET'])
 def get_boat(boatId):
-    res, boat = GetFromDb(boatId, boatstablename)
-    if res:
-        return json.loads(boat), 200
+    '''
+    Successful Codes: 200
+    '''
+    
+    # TODO: JWT
+    ''' JWT
+    publicflag = True
+    payload = verify_jwt(request, True) # returns with 401 error if token not validated
+    if payload != None:
+        sub = payload['sub']
     else:
-        return jsonify(errorMissingBoat), 404
+        sub = ""
+    '''
 
-# 3.) View all boats (supports pagination)
+    # validate inputs
+    boats = GetAllFromDbByOwnerSub(sub) # sub = "" if public
+    res = make_response(boats)
+    res.status_code = 200
+    return res
+    
+
+# Get All boats (supports pagination)
 @bp.route('/', methods=['GET'])
 def get_boats():
+    #TODO: JWT
     boats : str = GetAllFromDb(boatstablename)
     return json.loads(boats), 200
 
 # 4.) Delete a boat
 @bp.route('/<boatId>', methods=['DELETE'])
 def delete_boat(boatId):
-    resbool = DeleteFromDb(boatId, boatstablename)
-    if resbool:
-        return jsonify({}), 204
+    '''
+    Successful Codes: 204
+    Unsuccessuful Codes; 400, 403
+
+    Validates JWT to Delete Boat
+    '''
+
+    payload = verify_jwt(request) # returns with 401 error if token not validated
+    sub = payload['sub']
+
+    statuscode = DeleteFromDb(boatId, sub)
+    if statuscode == 204:
+        res = make_response()
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res
     else:
-        return jsonify(errorMissingBoat), 404
+        res = make_response(errorMessage[statuscode])
+        res.mimetype = 'application/json'
+        res.status_code = 403
+        return res 
 
 # 9.) Add a load to a boat 
 @bp.route('/<boatId>/loads/<loadId>', methods=['PUT'])
@@ -70,4 +119,6 @@ def get_loads_on_boat(boatId):
         return jsonify(errorMissingBoat), 404
 
 
-
+@bp.errorhandler(405)
+def method_not_allowed(e):
+    return 'Method not allowed', 405
