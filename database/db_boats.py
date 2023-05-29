@@ -57,17 +57,14 @@ def DeleteFromDb(id: str, ownersub:str) -> Tuple[int]:
     204 Created
     403 Forbidden (boat does not belong to owner)
     404 Not Found
-
-    if tablename == boatstablename: 
-            SetLoadCarrierToNoneForBoatDeletion(entity)
     '''
-    #todo: handle cascade
 
     key = client.key(boatstablename, int(id))
     entity = client.get(key=key)
     if entity and entity['owner'] != ownersub:
         return 403
     elif entity:
+        SetLoadCarrierToNoneForBoatDeletion(entity)
         client.delete(key)
         return 204
     else:
@@ -151,3 +148,14 @@ def DeleteLoadFromBoatDb(boatId, loadId) -> Tuple[bool, bool]:
         return True, True
     else:
         return True, False
+    
+
+# for loads in boat --> set carrier to None 
+def SetLoadCarrierToNoneForBoatDeletion(boat):
+    for loadRef in boat["loads"]:
+        loadId = loadRef["id"]
+        key = client.key(loadtablename, int(loadId))
+        load = client.get(key=key)
+        if load:
+            load.update({"carrier" : None})
+            client.put(load)

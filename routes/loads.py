@@ -157,3 +157,7 @@ def put_load(loadId):
         res.mimetype = 'application/json'
         res.status_code = statuscode
         return res
+
+@bp.errorhandler(405)
+def method_not_allowed(e):
+    return 'Method not allowed', 405

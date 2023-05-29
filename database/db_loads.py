@@ -141,15 +141,7 @@ def RemoveLoadFromBoat(load, owner:str) -> None:
                 boat.update({ "loads": boat["loads"]})
                 client.put(boat)
 
-# for loads in boat --> set carrier to None 
-def SetLoadCarrierToNoneForBoatDeletion(boat):
-    for loadRef in boat["loads"]:
-        loadId = loadRef["id"]
-        key = client.key(loadtablename, int(loadId))
-        load = client.get(key=key)
-        if load:
-            load.update({"carrier" : None})
-            client.put(load)
+
 
 
 def GetSpecificFromDb(id: str, tablename: str, property:str) -> Tuple[bool, str]:
