@@ -4,41 +4,156 @@ import json
 from database.db_loads import *
 from database.db import *
 from credentials.names import *
-from routes.helper.error_msg import errorMissingLoad
+from routes.helper.validation import *
+from routes.helper.jwt_verify import verify_jwt
+from routes.helper.error_msg import geterrormsg
 
 bp = Blueprint('loads', __name__, url_prefix='/loads')
 
-# 5.) Create a load
 @bp.route('/', methods=['POST'])
 def post_load():
-    loaddata = request.get_json();
-    res,load = AddLoadToDb(loaddata)
-    if res:
-        return json.loads(load), 201
-    else:
-        return jsonify({"Error": "The request object is missing at least one of the required attributes"}), 400
+    '''
+    Create Load; JWT not required
 
-# 6.) Get a load with ID
+    Successful: 201
+    Unsuccessful: 400, 401 (JWT), 406
+    '''
+    if not validateMime(request.accept_mimetypes,[jsonmime]): 
+        return 406, geterrormsg(boatstablename, 406)
+
+    loaddata = request.get_json()
+
+    statuscode,load = AddLoadToDb(loaddata)
+    if statuscode == 201:
+        res = make_response(load)
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res
+    else:
+        res = make_response(jsonify(load))
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res
+
 @bp.route('/<loadId>', methods=['GET'])
 def get_load(loadId):
-    res, load = GetFromDb(loadId, loadtablename)
-    if res:
-        return json.loads(load), 200
-    else:
-        return jsonify(errorMissingLoad), 404
+    '''
+    Get Load by ID
 
-# 7.) Get all loads. supports pagination
+    Successful: 200
+    Unsuccessful: 404
+    '''
+    if not validateMime(request.accept_mimetypes,[jsonmime]): 
+        return 406, geterrormsg(boatstablename, 406)
+
+    statuscode, load = GetLoadFromDb(loadId, loadtablename)
+    if statuscode == 200:
+        res = make_response(load)
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res
+    else:
+        res = make_response(jsonify(load))
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res
+
+
 @bp.route('/', methods=['GET'])
 def get_loads():
-    #todo: thing
+    '''
+    Get All Loads (Supports Pagination);
+
+    Successful: 200
+    Unsuccessful:
+    '''
+    if not validateMime(request.accept_mimetypes,[jsonmime]): 
+        return 406, geterrormsg(boatstablename, 406)
+
     loads = GetAllFromDb_Pagination(loadtablename, "")
     return json.loads(loads), 200
 
-# 8.) delete a load
 @bp.route('/<loadId>', methods=['DELETE'])
 def delete_load(loadId):
-    resbool = DeleteFromDb(loadId, loadtablename)
-    if resbool:
-        return jsonify({}), 204
+    '''
+    Delete Load; Requires JWT if load on boat
+
+    Successful: 204
+    Unsuccessful: 400, 403, 404
+    '''
+
+    payload = verify_jwt(request, True) # 401 on error
+    if not payload:
+        sub = ""
     else:
-        return jsonify(errorMissingLoad), 404
+        sub = payload['sub']
+
+    statuscode, msg = DeleteLoadFromDb(loadId, loadtablename)
+    if statuscode == 204:
+        res = make_response()
+        res.status_code = statuscode
+        return res
+    else:
+        res = make_response(jsonify(msg))
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res
+    
+@bp.route('/<loadId>', methods=['PATCH'])
+def patch_load(loadId):
+    '''
+    Patch Load; Requires JWT if load on boat
+
+    Successful: 201
+    Unsuccessful: 400, 403, 404, 406
+    '''
+
+    if not validateMime(request.accept_mimetypes,[jsonmime]): 
+        return 406, geterrormsg(boatstablename, 406)
+
+    loaddata = request.get_json()
+    payload = verify_jwt(request, True)
+    if not payload:
+        sub = ""
+    else:
+        sub = payload['sub']
+
+    statuscode,load = EditLoadFromDb(loadId, loaddata, sub, False)
+    if statuscode == 201:
+        res = make_response(load)
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res
+    else:
+        res = make_response(jsonify(load))
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res
+
+@bp.route('/<loadId>', methods=['PUT'])
+def put_load(loadId):
+    '''
+    Put Load; Requires JWT if load on boat
+
+    Successful: 201
+    Unsuccessful: 400, 403, 404, 406
+    '''
+
+    if not validateMime(request.accept_mimetypes,[jsonmime]): 
+        return 406, geterrormsg(boatstablename, 406)
+
+    loaddata = request.get_json()
+    payload = verify_jwt(request, True) # 401 on error
+    sub = payload['sub']
+
+    statuscode,load = EditLoadFromDb(loadId, loaddata, sub, True)
+    if statuscode == 201:
+        res = make_response(load)
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res
+    else:
+        res = make_response(jsonify(load))
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res

@@ -4,69 +4,128 @@ from google.cloud import datastore
 import json
 from credentials.names import boatstablename, loadtablename, baseurl
 from routes.helper.pagination import *
+from routes.helper.validation import *
+from routes.helper.error_msg import *
 
 client = datastore.Client()
     
-def AddLoadToDb(loadData) -> Tuple[bool, str]:
-    if "item" in loadData and "volume" in loadData and "creation_date" in loadData:
-        newload = datastore.entity.Entity(key=client.key(loadtablename))
-        newload.update({
-            "item": loadData["item"],
-            "volume": loadData["volume"],
-            "creation_date": loadData["creation_date"],
-            "carrier": None
-        })
-        client.put(newload)
-        newload["id"] = newload.key.id
-        newload["self"] = geturl(newload.key.id, loadtablename)
-        return True, json.dumps(newload)
-    else:
-        return False, ""
+def AddLoadToDb(load_data) -> Tuple[int, str]:
+    '''
+    Add Load
 
-def GetFromDb(id: str, tablename: str) -> Tuple[bool, str]:
-    if id == "null":
-        return False, None
-    key = client.key(tablename, int(id))
+    Successful: 201
+    Unsuccessful: 400
+    '''
+
+    valid_load, msg = validateloadinputs(load_data, True)
+    if not valid_load:
+        return 400, msg
+
+    newload = datastore.entity.Entity(key=client.key(loadtablename))
+    newload.update({
+        "item": load_data["item"],
+        "volume": load_data["volume"],
+        "creation_date": load_data["creation_date"],
+        "carrier": None
+    })
+    client.put(newload)
+    newload["id"] = newload.key.id
+    newload["self"] = geturl(newload.key.id, loadtablename)
+    return 201, json.dumps(newload)
+
+def GetLoadFromDb(id: str) -> Tuple[int, str]:
+    '''
+    Get Specific load from load DB
+
+    Success: 200
+    Unsuccess: 400, 404
+    '''
+
+    validId, msg = validateId(id)
+    if not validId:
+        return 400, msg
+
+    key = client.key(loadtablename, int(id))
     obj = client.get(key=key)
     if obj:
         obj["id"] = obj.key.id
-        obj["self"] = geturl(id, tablename)
-        return True, json.dumps(obj)
+        obj["self"] = geturl(id, loadtablename)
+        return 200, json.dumps(obj)
     else:
-        return False, None
-    
-def GetSpecificFromDb(id: str, tablename: str, property:str) -> Tuple[bool, str]:
-    if id == "null":
-        return False, None
-    key = client.key(tablename, int(id))
-    obj = client.get(key=key)
-    if obj:
-        if property == "loads":
-            for idx, loadRef in enumerate(obj["loads"]):
-                key = client.key(loadtablename, int(loadRef["id"]))
-                load = client.get(key=key)
-                obj["loads"][idx]["item"] = load["item"]
-                obj["loads"][idx]["volume"] = load["volume"]
-                obj["loads"][idx]["creation_date"] = load["creation_date"]
-        return True, json.dumps({property:obj[property]})
-    else:
-        return False, None
+        return 404, geterrormsg(404, boatstablename)
              
-def DeleteFromDb(id: str, tablename:str) -> bool:
-    key = client.key(tablename, int(id))
+def DeleteLoadFromDb(id: str, owner:str) -> Tuple[int,str]:
+    '''
+    Delete from loads DB. Does not delete if user is not owner 
+    of the boat load sits on.
+
+    Success: 204
+    Unsuccess: 400, 403, 404
+    '''
+    validId, msg = validateId(id)
+    if not validId:
+        return 400, msg
+    
+    key = client.key(loadtablename, int(id))
     entity = client.get(key=key)
+    if not OwnerOfBoatHoldingLoad(entity, owner):
+        return 403, geterrormsg(403, loadtablename)
+
     if entity:
-        if tablename == boatstablename: 
-            SetLoadCarrierToNoneForBoatDeletion(entity)
-        elif tablename == loadtablename:
-            RemoveLoadFromBoat(entity)
+        RemoveLoadFromBoat(entity)
         client.delete(key)
+        return 204, ""
+    else:
+        return 404, geterrormsg(404, loadtablename)
+    
+def EditLoadFromDb(loadId, loadData, owner, allinputsreqd) -> Tuple[int, str]:
+    '''
+    Successful: 201
+    Unsuccessful: 400, 403, 404
+    '''
+
+    validId, msg = validateId(loadId)
+    if not validId:
+        return 400, msg
+
+    inputsprovided, msg = validateloadinputs(loadData, allinputsreqd)
+    if not inputsprovided: return 400, msg
+
+    key = client.key(loadtablename, int(loadId))
+    load = client.get(key=key)
+    if not load:
+        return 404, geterrormsg(404, loadtablename)
+    
+    if not OwnerOfBoatHoldingLoad(load, owner):
+        return 403, geterrormsg(403, loadtablename)
+    
+    for property in ["volume", "item", "creation_date"]:
+        if property in loadData:
+            load.update({property: loadData[property]})
+    client.put(load)
+    return 201, json.dumps(load)
+
+def OwnerOfBoatHoldingLoad(load, owner) -> bool:
+    '''
+    Returns T/F if load is able to be modified by this owner
+    '''
+    boatId = load["carrier"]
+    if not boatId:
+        return True
+    
+    # get boat
+    key = client.key(boatstablename, int(boatId))
+    entity = client.get(key=key)
+    if entity and entity['owner'] == owner:
         return True
     else:
-        return False
+        return False  
 
 
-def RemoveLoadFromBoat(load):
+def RemoveLoadFromBoat(load, owner:str) -> None:
+    '''
+    Removes load from boat
+    '''
     if "id" in load["carrier"]:
         boatId = load["carrier"]["id"]
         key = client.key(boatstablename, int(boatId))
@@ -91,3 +150,21 @@ def SetLoadCarrierToNoneForBoatDeletion(boat):
         if load:
             load.update({"carrier" : None})
             client.put(load)
+
+
+def GetSpecificFromDb(id: str, tablename: str, property:str) -> Tuple[bool, str]:
+    if id == "null":
+        return False, None
+    key = client.key(tablename, int(id))
+    obj = client.get(key=key)
+    if obj:
+        if property == "loads":
+            for idx, loadRef in enumerate(obj["loads"]):
+                key = client.key(loadtablename, int(loadRef["id"]))
+                load = client.get(key=key)
+                obj["loads"][idx]["item"] = load["item"]
+                obj["loads"][idx]["volume"] = load["volume"]
+                obj["loads"][idx]["creation_date"] = load["creation_date"]
+        return True, json.dumps({property:obj[property]})
+    else:
+        return False, None

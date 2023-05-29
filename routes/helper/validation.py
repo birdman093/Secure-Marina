@@ -44,6 +44,32 @@ def validateboatinputs(boatData, includeall: bool) -> Tuple[bool, str]:
     
     return True, None
 
+def validateloadinputs(loadData, includeall: bool) -> Tuple[bool, str]:
+    '''
+    Validates load for volume, item, creation_date 
+
+    Returns T/F and error string
+    '''
+    # check for all required inputs
+    if includeall and ("name" not in loadData or "type" not in loadData or "length" not in loadData):
+        return False, errorMessage[400]
+    
+    # check for at least one required input
+    checkOnce = ("name" in loadData or "type" in loadData or "length" in loadData)
+    if not checkOnce: return False, errorMessage[400]
+
+    # validation of each type if required
+    if "name" in loadData and not validatestring(loadData["name"]): 
+        return False, errorMessageInputValidation["name"]
+    
+    if "type" in loadData and not validatestring(loadData["type"]): 
+        return False, errorMessageInputValidation["type"]
+    
+    if "length" in loadData and not validateint(loadData["length"]): 
+        return False, errorMessageInputValidation["length"]
+    
+    return True, None
+
 def validatestring(input) -> bool:
     '''
     Validate string has length 255 or fewer letters, length greater

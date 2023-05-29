@@ -8,11 +8,12 @@ client = datastore.Client()
 
 def GetAllFromDb_Pagination(tablename:str, owner: str) -> str:
     '''
-    Get all from DB that match owner id
+    Get all from DB that match owner id, if owner == "" then no filter
     '''
 
     query = client.query(kind=tablename)
-    query.add_filter('owner', '=', owner)
+    if owner != "":
+        query.add_filter('owner', '=', owner)
     q_limit = max(int(request.args.get('limit', '3')),3)
     q_offset = int(request.args.get('offset', '0'))
     l_iterator = query.fetch(limit= q_limit, offset=q_offset)
