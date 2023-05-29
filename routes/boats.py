@@ -168,46 +168,49 @@ def add_load_on_boat(boatId, loadId):
     Add a load to a boat;
     Requires valid JWT
 
-    Successful: 201
-    Unsuccessful: 401 (JWT)
+    Successful: 204
+    Unsuccessful: 400, 401 (JWT), 403, 404
     '''
 
     payload = verify_jwt(request) # returns with 401 error if token not validated
-    sub = payload['sub']
+    owner = payload['sub']
 
-    '''
-    TODO:
+    statuscode, msg = AddLoadToBoatDb(boatId, loadId, owner)
+    if statuscode == 204:
+        res = make_response()
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res
+    else:
+        res = make_response(msg)
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res
     
-    resFound, resEdit = AddLoadToBoatDb(boatId, loadId)
-    if resFound and resEdit: # success
-        return jsonify({}), 204
-    elif resFound: # cannot perform action
-        return jsonify(errorLoadOnBoat), 403
-    else: # missing boat or load
-        return jsonify(errorMissingOne), 404
-    '''
-    
-# 9.) Delete a load to a boat 
 @bp.route('/<boatId>/loads/<loadId>', methods=['DELETE'])
 def del_load_on_boat(boatId, loadId):
     '''
     Delete a load from boat;
     Requires valid JWT
 
-    Successful:
-    Unsuccessful: 401 (JWT)
+    Successful: 204
+    Unsuccessful: 400, 401 (JWT), 403, 404
     '''
 
     payload = verify_jwt(request) # returns with 401 error if token not validated
-    sub = payload['sub']
+    owner = payload['sub']
 
-    '''TODO: 
-    resFound, resEdit = DeleteLoadFromBoatDb(boatId, loadId)
-    if resFound and resEdit: # success
-        return jsonify({}), 204
-    else: # missing boat or load
-        return jsonify(errorBoatLoad), 404
-    '''
+    statuscode, msg = DeleteLoadFromBoatDb(boatId, loadId, owner)
+    if statuscode == 204:
+        res = make_response()
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res
+    else:
+        res = make_response(msg)
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res
 
 
 @bp.errorhandler(405)

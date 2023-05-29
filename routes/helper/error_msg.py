@@ -7,12 +7,8 @@ def geterrormsg(statuscode: int, tablename: str):
     else:
         return errorMessageBoat[statuscode]
 
-errorMissingAttribute = {"Error" : "The request object is missing at least one of the required attributes"}
-errorMissingBoat = {"Error" : "No boat with this boat_id exists"}
-errorMissingLoad = {"Error" : "No load with this load_id exists"}
-errorMissingOne = {"Error" : "The specified boat and/or load does not exist"}
 errorLoadOnBoat = {"Error": "The load is already loaded on another boat"}
-errorBoatLoad = {"Error": "No boat with this boat_id is loaded with the load with this load_id"}
+errorLoadNotOnOwnerBoat = {"Error": "The load is not on your boat and cannot be deleted"}
 
 errorMessageBoat = {
     400 : {"Error" : "The request is missing at least one required attribute"},
