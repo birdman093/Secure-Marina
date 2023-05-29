@@ -1,9 +1,3 @@
-from google.cloud import datastore
-from flask import Flask, request, jsonify, redirect
-from flask import render_template, session, url_for
-from flask_cors import cross_origin
-import requests
-from functools import wraps
 import json
 from six import *
 from jose import jwt
@@ -13,7 +7,7 @@ from dotenv import load_dotenv, find_dotenv
 from authlib.integrations.flask_client import OAuth
 from urllib.parse import quote_plus, urlencode
 
-from credentials import CLIENT_ID, CLIENT_SECRET, DOMAIN
+from credentials.credentials import CLIENT_ID, CLIENT_SECRET, DOMAIN
 
 ALGORITHMS = ["RS256"]
 

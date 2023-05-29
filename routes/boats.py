@@ -1,10 +1,10 @@
 from flask import Flask, request, jsonify, Blueprint, make_response
-from google.cloud import datastore
-from db import *
-from db_boats import *
-from responsehelper import *
-from jwtverify import verify_jwt
+from database.db_loads import *
+from database.db_boats import *
+from credentials.names import *
+from routes.helper.jwt_verify import verify_jwt
 import json
+from routes.helper.error_msg import errorMessage, errorLoadOnBoat, errorMissingOne, errorMissingAttribute, errorMissingBoat, errorBoatLoad
 
 bp = Blueprint('boats', __name__, url_prefix='/boats')
 
@@ -51,6 +51,7 @@ def get_boat(boatId):
     '''
 
     # validate inputs
+    sub = ""
     boats = GetAllFromDbByOwnerSub(sub) # sub = "" if public
     res = make_response(boats)
     res.status_code = 200

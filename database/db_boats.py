@@ -2,7 +2,8 @@ from typing import Tuple
 from flask import Flask, render_template, request, jsonify
 from google.cloud import datastore
 import json
-from responsehelper import boatstablename
+from credentials.names import boatstablename
+from routes.helper.pagination import *
 
 client = datastore.Client()
 
