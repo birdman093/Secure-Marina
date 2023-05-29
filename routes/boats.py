@@ -4,6 +4,7 @@ import json
 from database.db_boats import *
 from database.db import *
 from credentials.names import *
+from routes.helper.validation import *
 from routes.helper.jwt_verify import verify_jwt
 from routes.helper.error_msg import geterrormsg
 
@@ -13,14 +14,18 @@ bp = Blueprint('boats', __name__, url_prefix='/boats')
 def post_boat():
     '''
     Creates Boat, Requires JWT
+    Sends Boat back in Response
 
     Successful Codes: 201
-    Unsuccessuful Codes: 400, 401 (JWT)
+    Unsuccessuful Codes: 400, 401 (JWT), 406
     '''
 
-    payload = verify_jwt(request) # returns with 401 error if token not validated
-    boat = request.get_json()
+    if not validateMime(request.accept_mimetypes,[jsonmime]): 
+        return 406, geterrormsg(boatstablename, 406)
+
+    payload = verify_jwt(request) # 401 on error
     sub = payload['sub']
+    boat = request.get_json()
 
     statuscode, boat = AddBoatToDb(boat,sub)
     if statuscode == 201:
@@ -29,7 +34,7 @@ def post_boat():
         res.status_code = statuscode
         return res
     else:
-        res = make_response(jsonify(geterrormsg(statuscode, boatstablename)))
+        res = make_response(jsonify(boat))
         res.mimetype = 'application/json'
         res.status_code = statuscode
         return res
@@ -37,19 +42,28 @@ def post_boat():
 @bp.route('/<boatId>', methods=['GET'])
 def get_boat(boatId):
     '''
-    Get Boats by ID; Requires valid JWT to view
+    Returns Boat Data Given ID; Requires valid JWT to view
 
     Successful Codes: 200
-    Unsuccessful Codes: 401(JWT), 404
+    Unsuccessful Codes: 401(JWT), 403, 404, 406
     '''
-    
+    if not validateMime(request.accept_mimetypes,[jsonmime]): 
+        return 406, geterrormsg(boatstablename, 406)
+
     payload = verify_jwt(request) # returns with 401 error if token not validated
     sub = payload['sub']
 
-    boat = GetBoatById(sub)
-    res = make_response(boat)
-    res.status_code = 200
-    return res
+    statuscode, boat = GetBoatByOwnerandID(sub, boatId)
+    if statuscode == 200:
+        res = make_response(boat)
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res
+    else:
+        res = make_response(geterrormsg(statuscode, boatstablename))
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res
     
 
 @bp.route('/', methods=['GET'])
@@ -60,6 +74,8 @@ def get_boats():
     Successful Codes: 200
     Unsuccessful Codes: 401(JWT)
     '''
+    if not validateMime(request.accept_mimetypes,[jsonmime]): 
+        return 406, geterrormsg(boatstablename, 406)
 
     payload = verify_jwt(request) # returns with 401 error if token not validated
     sub = payload['sub']
@@ -88,36 +104,63 @@ def delete_boat(boatId):
     else:
         res = make_response(geterrormsg(statuscode, boatstablename))
         res.mimetype = 'application/json'
-        res.status_code = 403
+        res.status_code = statuscode
         return res 
     
 @bp.route('/<boatId>', methods=['PATCH'])
-def delete_boat(boatId):
+def patch_boat(boatId):
     '''
-    Delete Boat; Requires valid JWT
+    Patch Boat; Requires valid JWT
 
-    Successful Codes: 204
-    Unsuccessuful Codes: 401 (JWT), 403, 404
+    Successful Codes: 201
+    Unsuccessuful Codes: 400, 401 (JWT), 403, 404
     '''
+    if not validateMime(request.accept_mimetypes,[jsonmime]): 
+        return 406, geterrormsg(boatstablename, 406)
 
     payload = verify_jwt(request) # returns with 401 error if token not validated
     sub = payload['sub']
+    boat = request.get_json()
 
-    # TODO: THIS
+    statuscode, editboat = EditBoatFromDb(boatId, boat, sub, False)
+    if statuscode == 201:
+        res = make_response(editboat)
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res
+    else:
+        res = make_response(editboat)
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res 
+
 
 @bp.route('/<boatId>', methods=['PUT'])
-def delete_boat(boatId):
+def put_boat(boatId):
     '''
-    Delete Boat; Requires valid JWT
+    Put Boat; Requires valid JWT
 
-    Successful Codes: 204
-    Unsuccessuful Codes: 401 (JWT), 403, 404
+    Successful Codes: 201
+    Unsuccessuful Codes: 400, 401 (JWT), 403, 404
     '''
+    if not validateMime(request.accept_mimetypes,[jsonmime]): 
+        return 406, geterrormsg(boatstablename, 406)
 
     payload = verify_jwt(request) # returns with 401 error if token not validated
     sub = payload['sub']
+    boat = request.get_json()
 
-    # TODO: THIS
+    statuscode, editboat = EditBoatFromDb(boatId, boat, sub, True)
+    if statuscode == 201:
+        res = make_response(editboat)
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res
+    else:
+        res = make_response(editboat)
+        res.mimetype = 'application/json'
+        res.status_code = statuscode
+        return res 
 
 @bp.route('/<boatId>/loads/<loadId>', methods=['PUT'])
 def add_load_on_boat(boatId, loadId):
@@ -125,7 +168,7 @@ def add_load_on_boat(boatId, loadId):
     Add a load to a boat;
     Requires valid JWT
 
-    Successful:
+    Successful: 201
     Unsuccessful: 401 (JWT)
     '''
 

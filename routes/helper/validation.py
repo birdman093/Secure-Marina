@@ -2,6 +2,9 @@ from typing import Tuple
 from flask import Flask, request, jsonify, Blueprint, make_response, Response
 from routes.helper.validation import errorMessage, errorMessageInputValidation
 
+jsonmime = 'application/json'
+htmlmime = 'text/html'
+
 def validateId(id)-> Tuple[bool, dict]:
     '''
     Validate parameter id is of type int or can be converted to type int from string
@@ -15,7 +18,12 @@ def validateId(id)-> Tuple[bool, dict]:
         
     return True, None
 
-def validateboatinputs(boatData, includeall: bool) -> Tuple[bool, dict]:
+def validateboatinputs(boatData, includeall: bool) -> Tuple[bool, str]:
+    '''
+    Validates boat for name, type, length 
+
+    Returns T/F and error string
+    '''
     # check for all required inputs
     if includeall and ("name" not in boatData or "type" not in boatData or "length" not in boatData):
         return False, errorMessage[400]
@@ -73,3 +81,12 @@ def validateint(input):
         return False
 
     return True
+
+def validateMime(headeraccept: list[str], allowaccept: list[str]) -> bool:
+    '''
+    Validates Accept Headers
+    '''
+    for allow in allowaccept:
+        if allow in headeraccept:
+            return True
+    return False

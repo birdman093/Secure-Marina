@@ -4,16 +4,20 @@ from google.cloud import datastore
 import json
 from credentials.names import boatstablename, loadtablename
 from routes.helper.pagination import *
+from routes.helper.validation import *
+from routes.helper.error_msg import *
 
 client = datastore.Client()
 
 def AddBoatToDb(boatData: dict, owner: str) -> Tuple[int, str]:
     '''
     201 Created
-    400 Missing Attribute
+    400 Missing/ Invalid Attribute
+
+    Status Code, New Boat/ Error Msg
     '''
-    # TODO: validate inputs here
-    if "name" in boatData and "type" in boatData and "length" in boatData:
+    valid, error = validateboatinputs(boatData)
+    if valid:
         newboat = datastore.entity.Entity(key=client.key(boatstablename))
         newboat.update({
             "name": boatData["name"],
@@ -27,21 +31,26 @@ def AddBoatToDb(boatData: dict, owner: str) -> Tuple[int, str]:
         newboat["self"] = geturl(newboat.key.id, boatstablename)
         return 201, json.dumps(newboat)
     else:
-        return 400, ""
-    
-def GetBoatById(ownerSub: str) -> list:
+        return 400, error
+
+def GetBoatByOwnerandID(ownerSub: str, boatId: int) -> Tuple[int, str]:
     '''
-    Returns all boats belonged to by owner
+    Returns all boats belonged to by owner.
+
+    Successful: 200
+    Unsuccessful: 403, 404
     '''
 
-    #todo: Get boat by ID if owner valid
-    query = client.query(kind=boatstablename)
-    query.add_filter('owner', '=', ownerSub)
-    res = list(query.fetch())
-    for item in res:
-        item["id"] = item.key.id
-        item["self"] = geturl(item.key.id, boatstablename)
-    return res
+    key = client.key(boatstablename, int(boatId))
+    entity = client.get(key=key)
+    if entity and entity['owner'] == ownerSub:
+        entity["id"] = entity.key.id
+        entity["self"] = geturl(entity.key.id, boatstablename)
+        return 200, json.dumps(entity)
+    elif entity:
+        return 403, ""
+    else:
+        return 404, ""
              
 def DeleteFromDb(id: str, ownersub:str) -> Tuple[int]:
     '''
@@ -59,25 +68,29 @@ def DeleteFromDb(id: str, ownersub:str) -> Tuple[int]:
     else:
         return 404
 
-def EditBoatFromDb(boatId,boatData) -> Tuple[bool, bool, str]:
+def EditBoatFromDb(boatId, boatData, owner, allinputsreqd) -> Tuple[int, str]:
+    '''
+    Successful: 201
+    Unsuccessful: 400, 403, 404
+    '''
 
-    #todo: Update to use owner, etc.
+    inputsprovided, msg = validateboatinputs(boatData, allinputsreqd)
+    if not inputsprovided: return 400, msg
+
     key = client.key(boatstablename, int(boatId))
     boat = client.get(key=key)
-    if boat:
-        if "name" not in boatData or "type" not in boatData or \
-        "length" not in boatData:
-            return True, False, ""
-        else:
-            boat.update({
-            "name": boatData["name"],
-            "type": boatData["type"],
-            "length": boatData["length"]
-            })
-            client.put(boat)
-            return True, True, json.dumps(boat)
+    if boat and boat["owner"] == owner:
+        boat.update({
+        "name": boatData["name"],
+        "type": boatData["type"],
+        "length": boatData["length"]
+        })
+        client.put(boat)
+        return 201, json.dumps(boat)
+    elif boat and boat["owner"] != owner:
+        return 403, geterrormsg(403, boatstablename)
     else:
-        return False, False, ""
+        return 404, geterrormsg(404, boatstablename)
     
 # Add Load to Boat 
 def AddLoadToBoatDb(boatId, loadId) -> Tuple[bool, bool]:
