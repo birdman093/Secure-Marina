@@ -4,3 +4,4 @@ baseurl = local
 
 boatstablename = "boats"
 loadtablename = "loads"
+usertablename = "users"

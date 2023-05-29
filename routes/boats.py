@@ -1,22 +1,23 @@
-from flask import Flask, request, jsonify, Blueprint, make_response
-from database.db_loads import *
+from flask import request, jsonify, Blueprint, make_response
+import json
+
 from database.db_boats import *
+from database.db import *
 from credentials.names import *
 from routes.helper.jwt_verify import verify_jwt
-import json
-from routes.helper.error_msg import errorMessage, errorLoadOnBoat, errorMissingOne, errorMissingAttribute, errorMissingBoat, errorBoatLoad
+from routes.helper.error_msg import geterrormsg
 
 bp = Blueprint('boats', __name__, url_prefix='/boats')
-
-# Create Boat 
+ 
 @bp.route('/', methods=['POST'])
 def post_boat():
     '''
-    Successful Codes: 201
-    Unsuccessuful Codes; 401 (JWT)
+    Creates Boat, Requires JWT
 
-    Validates JWT to create a Boat
+    Successful Codes: 201
+    Unsuccessuful Codes: 400, 401 (JWT)
     '''
+
     payload = verify_jwt(request) # returns with 401 error if token not validated
     boat = request.get_json()
     sub = payload['sub']
@@ -28,51 +29,51 @@ def post_boat():
         res.status_code = statuscode
         return res
     else:
-        res = make_response(jsonify(errorMessage[statuscode]))
+        res = make_response(jsonify(geterrormsg(statuscode, boatstablename)))
         res.mimetype = 'application/json'
         res.status_code = statuscode
         return res
 
-# Get Boats by ID
 @bp.route('/<boatId>', methods=['GET'])
 def get_boat(boatId):
     '''
+    Get Boats by ID; Requires valid JWT to view
+
     Successful Codes: 200
+    Unsuccessful Codes: 401(JWT), 404
     '''
     
-    # TODO: JWT
-    ''' JWT
-    publicflag = True
-    payload = verify_jwt(request, True) # returns with 401 error if token not validated
-    if payload != None:
-        sub = payload['sub']
-    else:
-        sub = ""
-    '''
+    payload = verify_jwt(request) # returns with 401 error if token not validated
+    sub = payload['sub']
 
-    # validate inputs
-    sub = ""
-    boats = GetAllFromDbByOwnerSub(sub) # sub = "" if public
-    res = make_response(boats)
+    boat = GetBoatById(sub)
+    res = make_response(boat)
     res.status_code = 200
     return res
     
 
-# Get All boats (supports pagination)
 @bp.route('/', methods=['GET'])
 def get_boats():
-    #TODO: JWT
-    boats : str = GetAllFromDb(boatstablename)
+    '''
+    Get Boats w/ Pagination; Requires valid JWT to view
+
+    Successful Codes: 200
+    Unsuccessful Codes: 401(JWT)
+    '''
+
+    payload = verify_jwt(request) # returns with 401 error if token not validated
+    sub = payload['sub']
+
+    boats : str = GetAllFromDb_Pagination(boatstablename, sub)
     return json.loads(boats), 200
 
-# 4.) Delete a boat
 @bp.route('/<boatId>', methods=['DELETE'])
 def delete_boat(boatId):
     '''
-    Successful Codes: 204
-    Unsuccessuful Codes; 400, 403
+    Delete Boat; Requires valid JWT
 
-    Validates JWT to Delete Boat
+    Successful Codes: 204
+    Unsuccessuful Codes: 401 (JWT), 403, 404
     '''
 
     payload = verify_jwt(request) # returns with 401 error if token not validated
@@ -85,14 +86,55 @@ def delete_boat(boatId):
         res.status_code = statuscode
         return res
     else:
-        res = make_response(errorMessage[statuscode])
+        res = make_response(geterrormsg(statuscode, boatstablename))
         res.mimetype = 'application/json'
         res.status_code = 403
         return res 
+    
+@bp.route('/<boatId>', methods=['PATCH'])
+def delete_boat(boatId):
+    '''
+    Delete Boat; Requires valid JWT
 
-# 9.) Add a load to a boat 
+    Successful Codes: 204
+    Unsuccessuful Codes: 401 (JWT), 403, 404
+    '''
+
+    payload = verify_jwt(request) # returns with 401 error if token not validated
+    sub = payload['sub']
+
+    # TODO: THIS
+
+@bp.route('/<boatId>', methods=['PUT'])
+def delete_boat(boatId):
+    '''
+    Delete Boat; Requires valid JWT
+
+    Successful Codes: 204
+    Unsuccessuful Codes: 401 (JWT), 403, 404
+    '''
+
+    payload = verify_jwt(request) # returns with 401 error if token not validated
+    sub = payload['sub']
+
+    # TODO: THIS
+
 @bp.route('/<boatId>/loads/<loadId>', methods=['PUT'])
 def add_load_on_boat(boatId, loadId):
+    '''
+    Add a load to a boat;
+    Requires valid JWT
+
+    Successful:
+    Unsuccessful: 401 (JWT)
+    '''
+
+    payload = verify_jwt(request) # returns with 401 error if token not validated
+    sub = payload['sub']
+
+    '''
+    TODO:
+    
     resFound, resEdit = AddLoadToBoatDb(boatId, loadId)
     if resFound and resEdit: # success
         return jsonify({}), 204
@@ -100,24 +142,29 @@ def add_load_on_boat(boatId, loadId):
         return jsonify(errorLoadOnBoat), 403
     else: # missing boat or load
         return jsonify(errorMissingOne), 404
+    '''
     
 # 9.) Delete a load to a boat 
 @bp.route('/<boatId>/loads/<loadId>', methods=['DELETE'])
 def del_load_on_boat(boatId, loadId):
+    '''
+    Delete a load from boat;
+    Requires valid JWT
+
+    Successful:
+    Unsuccessful: 401 (JWT)
+    '''
+
+    payload = verify_jwt(request) # returns with 401 error if token not validated
+    sub = payload['sub']
+
+    '''TODO: 
     resFound, resEdit = DeleteLoadFromBoatDb(boatId, loadId)
     if resFound and resEdit: # success
         return jsonify({}), 204
     else: # missing boat or load
         return jsonify(errorBoatLoad), 404
-    
-# 10.) View all loads on a boat
-@bp.route('/<boatId>/loads', methods=['GET'])
-def get_loads_on_boat(boatId):
-    resFound, loads = GetSpecificFromDb(boatId, boatstablename, "loads")
-    if resFound:
-        return json.loads(loads), 200
-    else: # missing boat
-        return jsonify(errorMissingBoat), 404
+    '''
 
 
 @bp.errorhandler(405)

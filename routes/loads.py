@@ -1,7 +1,9 @@
-from flask import Flask, request, jsonify, Blueprint
-from database.db_loads import *
-from credentials.names import *
+from flask import request, jsonify, Blueprint
 import json
+
+from database.db_loads import *
+from database.db import *
+from credentials.names import *
 from routes.helper.error_msg import errorMissingLoad
 
 bp = Blueprint('loads', __name__, url_prefix='/loads')
@@ -28,7 +30,8 @@ def get_load(loadId):
 # 7.) Get all loads. supports pagination
 @bp.route('/', methods=['GET'])
 def get_loads():
-    loads = GetAllFromDb(loadtablename)
+    #todo: thing
+    loads = GetAllFromDb_Pagination(loadtablename, "")
     return json.loads(loads), 200
 
 # 8.) delete a load

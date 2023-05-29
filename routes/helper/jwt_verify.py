@@ -16,9 +16,13 @@ class AuthError(Exception):
         self.error = error
         self.status_code = status_code
 
-# Verify the JWT in the request's Authorization header
-# If allowinvalid -> returns None if invalid
 def verify_jwt(request, allowinvalid = False):
+    '''
+    Verify the JWT in the request's Authorization header
+    If allowinvalid -> returns None if invalid
+    
+    Unsuccesful: 401
+    '''
     if 'Authorization' in request.headers:
         auth_header = request.headers['Authorization'].split()
         token = auth_header[1]
