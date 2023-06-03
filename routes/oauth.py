@@ -10,6 +10,7 @@ from werkzeug.exceptions import HTTPException
 from dotenv import load_dotenv, find_dotenv
 from authlib.integrations.flask_client import OAuth
 from urllib.parse import quote_plus, urlencode
+from database.db_users import *
 
 from credentials.credentials import CLIENT_ID, CLIENT_SECRET, DOMAIN
 
@@ -42,9 +43,9 @@ def home():
 
 @bp.route("/login")
 def login():
-    print(f'**** login {url_for("callback", _external=True)} ****')
+    print(f'**** login {url_for("login.callback", _external=True)} ****')
     return oauth.auth0.authorize_redirect(
-        redirect_uri=url_for("callback", _external=True)
+        redirect_uri=url_for("login.callback", _external=True)
     )
 
 @bp.route("/callback", methods=["GET", "POST"])
@@ -53,7 +54,7 @@ def callback():
     token = oauth.auth0.authorize_access_token() # issue here
     session["user"] = token
     print("**** we got token ****")
-    print(token)
+    AddUserToDb(token)
     return redirect("/?token="+token['id_token'])
 
 @bp.route("/logout")
@@ -64,7 +65,7 @@ def logout():
         + "/v2/logout?"
         + urlencode(
             {
-                "returnTo": url_for("home", _external=True),
+                "returnTo": url_for("login.home", _external=True),
                 "client_id": CLIENT_ID,
             },
             quote_via=quote_plus,
