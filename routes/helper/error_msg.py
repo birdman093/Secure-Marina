@@ -1,7 +1,7 @@
 import json
 from credentials.names import *
 
-def geterrormsg(statuscode: int, tablename: str):
+def geterrormsg(tablename: str, statuscode: int):
     if tablename == loadtablename:
         return errorMessageLoad[statuscode]
     else:

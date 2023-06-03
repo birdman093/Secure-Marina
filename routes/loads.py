@@ -19,7 +19,10 @@ def post_load():
     Unsuccessful: 400, 401 (JWT), 406
     '''
     if not validateMime(request.accept_mimetypes,[jsonmime]): 
-        return 406, geterrormsg(boatstablename, 406)
+        res = make_response(jsonify(geterrormsg(boatstablename, 406)))
+        res.mimetype = 'application/json'
+        res.status_code = 406
+        return res
 
     loaddata = request.get_json()
 
@@ -44,7 +47,10 @@ def get_load(loadId):
     Unsuccessful: 404
     '''
     if not validateMime(request.accept_mimetypes,[jsonmime]): 
-        return 406, geterrormsg(boatstablename, 406)
+        res = make_response(jsonify(geterrormsg(boatstablename, 406)))
+        res.mimetype = 'application/json'
+        res.status_code = 406
+        return res
 
     statuscode, load = GetLoadFromDb(loadId, loadtablename)
     if statuscode == 200:
@@ -68,7 +74,10 @@ def get_loads():
     Unsuccessful:
     '''
     if not validateMime(request.accept_mimetypes,[jsonmime]): 
-        return 406, geterrormsg(boatstablename, 406)
+        res = make_response(jsonify(geterrormsg(boatstablename, 406)))
+        res.mimetype = 'application/json'
+        res.status_code = 406
+        return res
 
     loads = GetAllFromDb_Pagination(loadtablename, "")
     return json.loads(loads), 200
@@ -109,7 +118,10 @@ def patch_load(loadId):
     '''
 
     if not validateMime(request.accept_mimetypes,[jsonmime]): 
-        return 406, geterrormsg(boatstablename, 406)
+        res = make_response(jsonify(geterrormsg(boatstablename, 406)))
+        res.mimetype = 'application/json'
+        res.status_code = 406
+        return res
 
     loaddata = request.get_json()
     payload = verify_jwt(request, True)
@@ -140,7 +152,10 @@ def put_load(loadId):
     '''
 
     if not validateMime(request.accept_mimetypes,[jsonmime]): 
-        return 406, geterrormsg(boatstablename, 406)
+        res = make_response(jsonify(geterrormsg(boatstablename, 406)))
+        res.mimetype = 'application/json'
+        res.status_code = 406
+        return res
 
     loaddata = request.get_json()
     payload = verify_jwt(request, True) # 401 on error

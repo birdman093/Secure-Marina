@@ -5,7 +5,7 @@ from database.db_boats import *
 from database.db import *
 from credentials.names import *
 from routes.helper.validation import *
-from routes.helper.jwt_verify import verify_jwt
+from routes.helper.jwt_verify import verify_jwt, AuthError
 from routes.helper.error_msg import geterrormsg
 
 bp = Blueprint('boats', __name__, url_prefix='/boats')
@@ -21,7 +21,10 @@ def post_boat():
     '''
 
     if not validateMime(request.accept_mimetypes,[jsonmime]): 
-        return 406, geterrormsg(boatstablename, 406)
+        res = make_response(jsonify(geterrormsg(boatstablename, 406)))
+        res.mimetype = 'application/json'
+        res.status_code = 406
+        return res
 
     payload = verify_jwt(request) # 401 on error
     sub = payload['sub']
@@ -48,7 +51,10 @@ def get_boat(boatId):
     Unsuccessful Codes: 401(JWT), 403, 404, 406
     '''
     if not validateMime(request.accept_mimetypes,[jsonmime]): 
-        return 406, geterrormsg(boatstablename, 406)
+        res = make_response(jsonify(geterrormsg(boatstablename, 406)))
+        res.mimetype = 'application/json'
+        res.status_code = 406
+        return res
 
     payload = verify_jwt(request) # returns with 401 error if token not validated
     sub = payload['sub']
@@ -75,7 +81,10 @@ def get_boats():
     Unsuccessful Codes: 401(JWT)
     '''
     if not validateMime(request.accept_mimetypes,[jsonmime]): 
-        return 406, geterrormsg(boatstablename, 406)
+        res = make_response(jsonify(geterrormsg(boatstablename, 406)))
+        res.mimetype = 'application/json'
+        res.status_code = 406
+        return res
 
     payload = verify_jwt(request) # returns with 401 error if token not validated
     sub = payload['sub']
@@ -116,7 +125,10 @@ def patch_boat(boatId):
     Unsuccessuful Codes: 400, 401 (JWT), 403, 404
     '''
     if not validateMime(request.accept_mimetypes,[jsonmime]): 
-        return 406, geterrormsg(boatstablename, 406)
+        res = make_response(jsonify(geterrormsg(boatstablename, 406)))
+        res.mimetype = 'application/json'
+        res.status_code = 406
+        return res
 
     payload = verify_jwt(request) # returns with 401 error if token not validated
     sub = payload['sub']
@@ -144,7 +156,10 @@ def put_boat(boatId):
     Unsuccessuful Codes: 400, 401 (JWT), 403, 404
     '''
     if not validateMime(request.accept_mimetypes,[jsonmime]): 
-        return 406, geterrormsg(boatstablename, 406)
+        res = make_response(jsonify(geterrormsg(boatstablename, 406)))
+        res.mimetype = 'application/json'
+        res.status_code = 406
+        return res
 
     payload = verify_jwt(request) # returns with 401 error if token not validated
     sub = payload['sub']

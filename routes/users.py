@@ -15,8 +15,12 @@ def get_users():
     Successful Codes: 200
     '''
     if not validateMime(request.accept_mimetypes,[jsonmime]): 
-        return 406, geterrormsg(boatstablename, 406)
+        res = make_response(jsonify(geterrormsg(boatstablename, 406)))
+        res.mimetype = 'application/json'
+        res.status_code = 406
+        return res
 
     users : list[dict] = GetUsersFromDb()
-    print(users)
-    return jsonify(users), 200
+    res = make_response(jsonify(users))
+    res.status_code = 200
+    return res

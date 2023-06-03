@@ -16,7 +16,7 @@ def AddBoatToDb(boatData: dict, owner: str) -> Tuple[int, str]:
 
     Status Code, New Boat/ Error Msg
     '''
-    valid, error = validateboatinputs(boatData)
+    valid, error = validateboatinputs(boatData, True)
     if valid:
         newboat = datastore.entity.Entity(key=client.key(boatstablename))
         newboat.update({

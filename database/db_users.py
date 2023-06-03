@@ -20,19 +20,23 @@ def AddUserToDb(user_data) -> None:
     query = client.query(kind=usertablename)
     query.key_filter(client.key(usertablename, sub), '=')
     results = list(query.fetch())
-    if len(results) > 0:
+    if len(results) == 0:
+        user = datastore.entity.Entity(key=client.key(usertablename, sub))
+        user.update({
+            "nickname": user_data["userinfo"]["nickname"],
+            "email": user_data["userinfo"]["email"],
+            "sub": user_data["userinfo"]["sub"],
+            "id_token": user_data["id_token"]
+        })
+        print("added added")
+    else:
+        user = results[0]
+        user.update({
+            "id_token": user_data["id_token"]
+        })
         print("not added")
-        return
 
-    user = datastore.entity.Entity(key=client.key(usertablename, sub))
-    user.update({
-        "nickname": user_data["userinfo"]["nickname"],
-        "email": user_data["userinfo"]["email"],
-        "sub": user_data["userinfo"]["sub"]
-    })
     client.put(user)
-    print("added")
-    print("user")
     
 
 def GetUsersFromDb() -> Tuple[int, str]:
@@ -47,4 +51,4 @@ def GetUsersFromDb() -> Tuple[int, str]:
     results = list(query.fetch())
     users = [{k: v for k, v in dict(entity).items() if k != '__key__'} for entity in results]
     print(users)
-    return 200, json.dumps(users)
+    return users

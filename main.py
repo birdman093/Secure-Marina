@@ -1,5 +1,6 @@
-from flask import Flask
+from flask import Flask, jsonify
 import routes.boats as boats, routes.loads as loads, routes.oauth as login
+from routes.helper.jwt_verify import AuthError
 import routes.users as users
 from credentials.credentials import FLASK_SECRET_KEY
 
@@ -11,6 +12,12 @@ app.register_blueprint(loads.bp)
 app.register_blueprint(login.bp)
 app.register_blueprint(users.bp)
 login.setup_oauth(app)
+
+@app.errorhandler(AuthError)
+def handle_auth_error(ex):
+    response = jsonify(ex.error)
+    response.status_code = ex.status_code
+    return response
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8000, debug=True)
