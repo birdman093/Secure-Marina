@@ -68,7 +68,7 @@ def DeleteLoadFromDb(id: str, owner:str) -> Tuple[int,str]:
     
     key = client.key(loadtablename, int(id))
     entity = client.get(key=key)
-    if not OwnerOfBoatHoldingLoad(entity, owner):
+    if entity and not OwnerOfBoatHoldingLoad(entity, owner):
         return 403, geterrormsg(loadtablename, 403)
 
     if entity:
@@ -103,12 +103,15 @@ def EditLoadFromDb(loadId, loadData, owner, allinputsreqd) -> Tuple[int, str]:
         if property in loadData:
             load.update({property: loadData[property]})
     client.put(load)
+    load["id"] = load.key.id
+    load["self"] = geturl(load.key.id, loadtablename)
     return 201, json.dumps(load)
 
 def OwnerOfBoatHoldingLoad(load, owner) -> bool:
     '''
     Returns T/F if load is able to be modified by this owner
     '''
+    print(load)
     boatId = load["carrier"]
     if not boatId:
         return True
@@ -122,12 +125,12 @@ def OwnerOfBoatHoldingLoad(load, owner) -> bool:
         return False  
 
 
-def RemoveLoadFromBoat(load, owner:str) -> None:
+def RemoveLoadFromBoat(load) -> None:
     '''
     Removes load from boat
     '''
-    if "id" in load["carrier"]:
-        boatId = load["carrier"]["id"]
+    if load["carrier"]:
+        boatId = load["carrier"]
         key = client.key(boatstablename, int(boatId))
         boat = client.get(key=key)
         if boat:
@@ -135,7 +138,7 @@ def RemoveLoadFromBoat(load, owner:str) -> None:
             for idx, loadRef in enumerate(boat["loads"]):
                 if int(loadRef["id"]) == int(load.key.id):
                     delIdx = idx
-                    break;
+                    break
             if delIdx != -1:
                 boat["loads"].pop(delIdx)
                 boat.update({ "loads": boat["loads"]})

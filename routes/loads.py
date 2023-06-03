@@ -16,7 +16,7 @@ def post_load():
     Create Load; JWT not required
 
     Successful: 201
-    Unsuccessful: 400, 401 (JWT), 406
+    Unsuccessful: 400, 406
     '''
     if not validateMime(request.accept_mimetypes,[jsonmime]): 
         res = make_response(jsonify(geterrormsg(boatstablename, 406)))
@@ -52,7 +52,7 @@ def get_load(loadId):
         res.status_code = 406
         return res
 
-    statuscode, load = GetLoadFromDb(loadId, loadtablename)
+    statuscode, load = GetLoadFromDb(loadId)
     if statuscode == 200:
         res = make_response(load)
         res.mimetype = 'application/json'
@@ -71,7 +71,7 @@ def get_loads():
     Get All Loads (Supports Pagination);
 
     Successful: 200
-    Unsuccessful:
+    Unsuccessful: 406
     '''
     if not validateMime(request.accept_mimetypes,[jsonmime]): 
         res = make_response(jsonify(geterrormsg(boatstablename, 406)))
@@ -159,7 +159,10 @@ def put_load(loadId):
 
     loaddata = request.get_json()
     payload = verify_jwt(request, True) # 401 on error
-    sub = payload['sub']
+    if not payload:
+        sub = ""
+    else:
+        sub = payload['sub']
 
     statuscode,load = EditLoadFromDb(loadId, loaddata, sub, True)
     if statuscode == 201:

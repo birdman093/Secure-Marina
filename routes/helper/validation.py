@@ -1,7 +1,8 @@
 from typing import Tuple
 from flask import Flask, request, jsonify, Blueprint, make_response, Response
-from routes.helper.error_msg import geterrormsg, errorMessageInputValidation
+from routes.helper.error_msg import geterrormsg, errorMessageInputValidationLoad, errorMessageInputValidationBoat
 from credentials.names import *
+from datetime import datetime
 
 jsonmime = 'application/json'
 htmlmime = 'text/html'
@@ -15,7 +16,7 @@ def validateId(id)-> Tuple[bool, dict]:
         try:
             int_value = int(id)
         except ValueError:
-            return False, errorMessageInputValidation["id"]
+            return False, errorMessageInputValidationBoat["id"]
         
     return True, None
 
@@ -35,13 +36,13 @@ def validateboatinputs(boatData, includeall: bool) -> Tuple[bool, str]:
 
     # validation of each type if required
     if "name" in boatData and not validatestring(boatData["name"]): 
-        return False, errorMessageInputValidation["name"]
+        return False, errorMessageInputValidationBoat["name"]
     
     if "type" in boatData and not validatestring(boatData["type"]): 
-        return False, errorMessageInputValidation["type"]
+        return False, errorMessageInputValidationBoat["type"]
     
     if "length" in boatData and not validateint(boatData["length"]): 
-        return False, errorMessageInputValidation["length"]
+        return False, errorMessageInputValidationBoat["length"]
     
     return True, None
 
@@ -52,22 +53,22 @@ def validateloadinputs(loadData, includeall: bool) -> Tuple[bool, str]:
     Returns T/F and error string
     '''
     # check for all required inputs
-    if includeall and ("name" not in loadData or "type" not in loadData or "length" not in loadData):
+    if includeall and ("volume" not in loadData or "item" not in loadData or "creation_date" not in loadData):
         return False, geterrormsg(loadtablename, 400)
     
     # check for at least one required input
-    checkOnce = ("name" in loadData or "type" in loadData or "length" in loadData)
+    checkOnce = ("volume" in loadData or "item" in loadData or "creation_date" in loadData)
     if not checkOnce: return False, geterrormsg(loadtablename, 400)
 
     # validation of each type if required
-    if "name" in loadData and not validatestring(loadData["name"]): 
-        return False, errorMessageInputValidation["name"]
+    if "volume" in loadData and not validateint(loadData["volume"]): 
+        return False, errorMessageInputValidationLoad["volume"]
     
-    if "type" in loadData and not validatestring(loadData["type"]): 
-        return False, errorMessageInputValidation["type"]
+    if "item" in loadData and not validatestring(loadData["item"]): 
+        return False, errorMessageInputValidationLoad["item"]
     
-    if "length" in loadData and not validateint(loadData["length"]): 
-        return False, errorMessageInputValidation["length"]
+    if "creation_date" in loadData and not validatedate(loadData["creation_date"]): 
+        return False, errorMessageInputValidationLoad["creation_date"]
     
     return True, None
 
@@ -98,6 +99,16 @@ def validatestring(input) -> bool:
         return False
         
     return True
+
+def validatedate(input) -> bool:
+    '''
+    Validate date in YYYY-MM-DD format using datetime module
+    '''
+    try:
+        datetime.strptime(input, '%Y-%m-%d')
+        return True
+    except ValueError:
+        return False
 
 def validateint(input):
     '''

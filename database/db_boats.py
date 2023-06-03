@@ -171,7 +171,7 @@ def DeleteLoadFromBoatDb(boatId, loadId, owner) -> Tuple[int, str]:
     elif load["carrier"] == boat.key.id:
         with client.transaction():
             # remove load from boat
-            index = next((i for i, loadRef in enumerate(boat["loads"]) if int(loadId) == int(loadRef["id"])), None)
+            index = next((i for i, loadRef in enumerate(boat["loads"]) if int(loadId) == int(loadRef)), None)
             boat["loads"].pop(index)
             boat.update({ "loads": boat["loads"]})
             client.put(boat)

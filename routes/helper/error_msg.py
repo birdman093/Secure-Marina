@@ -28,9 +28,16 @@ errorMessageLoad = {
 
 
 
-errorMessageInputValidation = {
+errorMessageInputValidationBoat = {
     "name" : {"Error" : "Invalid Name. Either No input, too long (more than 255 characters), contains invalid characters, or does not begin or end with a letter"},
     "type" : {"Error" : "Invalid Type. Either No input, too long (more than 255 characters), contains invalid characters, or does not begin or end with a letter"},
     "length" : {"Error" : "Invalid Length. Not an integer"},
+    "id" : {"Error" : "Invalid id type"},
+}
+
+errorMessageInputValidationLoad = {
+    "creation_date" : {"Error" : "Invalid Date. YYYY-MM-DD format required."},
+    "item" : {"Error" : "Invalid Type. Either No input, too long (more than 255 characters), contains invalid characters, or does not begin or end with a letter"},
+    "volume" : {"Error" : "Invalid Length. Not an integer"},
     "id" : {"Error" : "Invalid id type"},
 }
