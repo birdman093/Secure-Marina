@@ -1,6 +1,6 @@
-local = "http://127.0.0.1:8080"
-production = "TBD"
-baseurl = local
+local = "http://127.0.0.1:8000"
+production = "https://marina-388119.ue.r.appspot.com"
+baseurl = production
 
 boatstablename = "boats"
 loadtablename = "loads"
