@@ -27,11 +27,11 @@ def validateboatinputs(boatData, includeall: bool) -> Tuple[bool, str]:
     '''
     # check for all required inputs
     if includeall and ("name" not in boatData or "type" not in boatData or "length" not in boatData):
-        return False, geterrormsg(400, boatstablename)
+        return False, geterrormsg(boatstablename, 400)
     
     # check for at least one required input
     checkOnce = ("name" in boatData or "type" in boatData or "length" in boatData)
-    if not checkOnce: return False, geterrormsg(400, boatstablename)
+    if not checkOnce: return False, geterrormsg(boatstablename, 400)
 
     # validation of each type if required
     if "name" in boatData and not validatestring(boatData["name"]): 
@@ -53,11 +53,11 @@ def validateloadinputs(loadData, includeall: bool) -> Tuple[bool, str]:
     '''
     # check for all required inputs
     if includeall and ("name" not in loadData or "type" not in loadData or "length" not in loadData):
-        return False, geterrormsg(400, loadtablename)
+        return False, geterrormsg(loadtablename, 400)
     
     # check for at least one required input
     checkOnce = ("name" in loadData or "type" in loadData or "length" in loadData)
-    if not checkOnce: return False, geterrormsg(400, loadtablename)
+    if not checkOnce: return False, geterrormsg(loadtablename, 400)
 
     # validation of each type if required
     if "name" in loadData and not validatestring(loadData["name"]): 

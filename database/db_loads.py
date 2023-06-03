@@ -52,7 +52,7 @@ def GetLoadFromDb(id: str) -> Tuple[int, str]:
         obj["self"] = geturl(id, loadtablename)
         return 200, json.dumps(obj)
     else:
-        return 404, geterrormsg(404, boatstablename)
+        return 404, geterrormsg(boatstablename, 404)
              
 def DeleteLoadFromDb(id: str, owner:str) -> Tuple[int,str]:
     '''
@@ -69,14 +69,14 @@ def DeleteLoadFromDb(id: str, owner:str) -> Tuple[int,str]:
     key = client.key(loadtablename, int(id))
     entity = client.get(key=key)
     if not OwnerOfBoatHoldingLoad(entity, owner):
-        return 403, geterrormsg(403, loadtablename)
+        return 403, geterrormsg(loadtablename, 403)
 
     if entity:
         RemoveLoadFromBoat(entity)
         client.delete(key)
         return 204, ""
     else:
-        return 404, geterrormsg(404, loadtablename)
+        return 404, geterrormsg(loadtablename, 404)
     
 def EditLoadFromDb(loadId, loadData, owner, allinputsreqd) -> Tuple[int, str]:
     '''
@@ -94,10 +94,10 @@ def EditLoadFromDb(loadId, loadData, owner, allinputsreqd) -> Tuple[int, str]:
     key = client.key(loadtablename, int(loadId))
     load = client.get(key=key)
     if not load:
-        return 404, geterrormsg(404, loadtablename)
+        return 404, geterrormsg(loadtablename, 404)
     
     if not OwnerOfBoatHoldingLoad(load, owner):
-        return 403, geterrormsg(403, loadtablename)
+        return 403, geterrormsg(loadtablename, 403)
     
     for property in ["volume", "item", "creation_date"]:
         if property in loadData:
@@ -140,23 +140,3 @@ def RemoveLoadFromBoat(load, owner:str) -> None:
                 boat["loads"].pop(delIdx)
                 boat.update({ "loads": boat["loads"]})
                 client.put(boat)
-
-
-
-
-def GetSpecificFromDb(id: str, tablename: str, property:str) -> Tuple[bool, str]:
-    if id == "null":
-        return False, None
-    key = client.key(tablename, int(id))
-    obj = client.get(key=key)
-    if obj:
-        if property == "loads":
-            for idx, loadRef in enumerate(obj["loads"]):
-                key = client.key(loadtablename, int(loadRef["id"]))
-                load = client.get(key=key)
-                obj["loads"][idx]["item"] = load["item"]
-                obj["loads"][idx]["volume"] = load["volume"]
-                obj["loads"][idx]["creation_date"] = load["creation_date"]
-        return True, json.dumps({property:obj[property]})
-    else:
-        return False, None

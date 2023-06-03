@@ -44,7 +44,6 @@ def GetUsersFromDb() -> Tuple[int, str]:
     Add User
 
     Successful: 200
-    Unsuccessful: 400
     '''
     # Create a query on the kind
     query = client.query(kind=usertablename)

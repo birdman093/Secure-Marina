@@ -66,7 +66,7 @@ def get_boat(boatId):
         res.status_code = statuscode
         return res
     else:
-        res = make_response(geterrormsg(statuscode, boatstablename))
+        res = make_response(geterrormsg(boatstablename, statuscode))
         res.mimetype = 'application/json'
         res.status_code = statuscode
         return res
@@ -111,7 +111,7 @@ def delete_boat(boatId):
         res.status_code = statuscode
         return res
     else:
-        res = make_response(geterrormsg(statuscode, boatstablename))
+        res = make_response(geterrormsg(boatstablename, statuscode))
         res.mimetype = 'application/json'
         res.status_code = statuscode
         return res 

@@ -97,11 +97,13 @@ def EditBoatFromDb(boatId, boatData, owner, allinputsreqd) -> Tuple[int, str]:
             if property in boatData:
                 boat.update({property: boatData[property]})
         client.put(boat)
+        boat["id"] = boat.key.id
+        boat["self"] = geturl(boat.key.id, boatstablename)
         return 201, json.dumps(boat)
     elif boat and boat["owner"] != owner:
-        return 403, geterrormsg(403, boatstablename)
+        return 403, geterrormsg(boatstablename, 403)
     else:
-        return 404, geterrormsg(404, boatstablename)
+        return 404, geterrormsg(boatstablename, 404)
     
 def AddLoadToBoatDb(boatId, loadId, owner) -> Tuple[int, bool]:
     '''
@@ -124,11 +126,11 @@ def AddLoadToBoatDb(boatId, loadId, owner) -> Tuple[int, bool]:
     load = client.get(key=keyload)
 
     if not boat:
-        return 404, geterrormsg(404, boatstablename)
+        return 404, geterrormsg(boatstablename, 404)
     elif not load:
-        return 404, geterrormsg(404, loadtablename)
+        return 404, geterrormsg(loadtablename, 404)
     elif boat["owner"] != owner:
-        return 403, geterrormsg(403, boatstablename)
+        return 403, geterrormsg(boatstablename, 403)
     elif load["carrier"] == None and not any(int(loadId) == int(loadRef["id"]) for loadRef in boat["loads"]):
         
         with client.transaction():
@@ -159,11 +161,11 @@ def DeleteLoadFromBoatDb(boatId, loadId, owner) -> Tuple[int, str]:
     load = client.get(key=keyload)
 
     if not boat:
-        return 404, geterrormsg(404, boatstablename)
+        return 404, geterrormsg(boatstablename, 404)
     elif not load:
-        return 404, geterrormsg(404, loadtablename)
+        return 404, geterrormsg(loadtablename, 404)
     elif boat["owner"] != owner:
-        return 403, geterrormsg(403, boatstablename)
+        return 403, geterrormsg(boatstablename, 403)
     elif load["carrier"] != boat.key.id:
         return 403, errorLoadNotOnOwnerBoat
     elif load["carrier"] == boat.key.id:
@@ -182,7 +184,7 @@ def DeleteLoadFromBoatDb(boatId, loadId, owner) -> Tuple[int, str]:
 
         return 204, ""
     else:
-        return 400, geterrormsg(400, boatstablename)
+        return 400, geterrormsg(boatstablename, 400)
     
 
 # for loads in boat --> set carrier to None 
