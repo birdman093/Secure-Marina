@@ -39,7 +39,11 @@ def setup_oauth(app):
 @bp.route('/')
 def home():
     token = request.args.get('token')
-    return render_template('index.html')        
+    if (token and len(token) > 0):
+        token = "User JWT (For Marina API Usage): \n" + token
+    else:
+        token = ""
+    return render_template('index.html', buttonResponse=token)      
 
 @bp.route("/login")
 def login():

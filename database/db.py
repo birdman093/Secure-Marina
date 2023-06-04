@@ -14,7 +14,7 @@ def GetAllFromDb_Pagination(tablename:str, owner: str) -> str:
     query = client.query(kind=tablename)
     if owner != "":
         query.add_filter('owner', '=', owner)
-    q_limit = max(int(request.args.get('limit', '3')),3)
+    q_limit = min(20,max(int(request.args.get('limit', '5')),5))
     q_offset = int(request.args.get('offset', '0'))
     l_iterator = query.fetch(limit= q_limit, offset=q_offset)
     pages = l_iterator.pages
@@ -29,6 +29,16 @@ def GetAllFromDb_Pagination(tablename:str, owner: str) -> str:
         e["self"] = geturl(e.key.id, tablename)
 
     output = {f"{tablename}": results}
+
+    # Query for total count
+    count_query = client.aggregation_query(query).count() 
+    count_result = count_query.fetch() 
+    total = 0
+    for aggregation_results in count_result:
+        for aggregation in aggregation_results:
+            total += aggregation.value
+
+    output["total"] = total
     if next_url:
         output["next"] = next_url
     return json.dumps(output)
