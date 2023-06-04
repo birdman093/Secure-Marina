@@ -227,7 +227,3 @@ def del_load_on_boat(boatId, loadId):
         res.status_code = statuscode
         return res
 
-
-@bp.errorhandler(405)
-def method_not_allowed(e):
-    return 'Method not allowed', 405
