@@ -131,7 +131,7 @@ def AddLoadToBoatDb(boatId, loadId, owner) -> Tuple[int, bool]:
         return 404, geterrormsg(loadtablename, 404)
     elif boat["owner"] != owner:
         return 403, geterrormsg(boatstablename, 403)
-    elif load["carrier"] == None and not any(int(loadId) == int(loadRef["id"]) for loadRef in boat["loads"]):
+    elif load["carrier"] == None and not any(int(loadId) == int(loadRef) for loadRef in boat["loads"]):
         
         with client.transaction():
             # add load to boat

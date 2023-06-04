@@ -7,7 +7,7 @@ def geterrormsg(tablename: str, statuscode: int):
     else:
         return errorMessageBoat[statuscode]
 
-errorLoadOnBoat = {"Error": "The load is already loaded on another boat"}
+errorLoadOnBoat = {"Error": "Load is on a boat already"}
 errorLoadNotOnOwnerBoat = {"Error": "The load is not on your boat and cannot be deleted"}
 
 errorMessageBoat = {
